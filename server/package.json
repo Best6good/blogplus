@@ -1,0 +1,16 @@
+{
+  "name": "blogplus-server",
+  "version": "1.0.0",
+  "description": "学习随录 - 个人博客后端服务",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node --watch app.js",
+    "init-db": "node database/init.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.0"
+  }
+}

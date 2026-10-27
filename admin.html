@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>内容管理 | 学习随录</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <!-- 复用前台设计系统（只读引用，不修改） -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- 后台专属布局 -->
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <!-- 顶部导航：复用前台 .site-header / .brand / .nav-link / .theme-toggle -->
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="index.html" class="brand">
+        <span class="brand-mark">学</span>
+        <span class="brand-name">学习随录</span>
+        <span class="admin-badge">管理</span>
+      </a>
+      <nav class="main-nav" aria-label="后台模块导航">
+        <a href="#" class="nav-link is-active" data-tab="notes">学习笔记</a>
+        <a href="#" class="nav-link" data-tab="projects">项目实践</a>
+        <a href="#" class="nav-link" data-tab="about">关于我</a>
+      </nav>
+      <div class="admin-header-actions">
+        <a href="index.html" class="btn btn-secondary btn-sm">返回前台</a>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换深色模式">
+          <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>
+          <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- 无鉴权风险提示 -->
+  <div class="admin-warning" id="adminWarning">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+    <span>本后台接口<strong>无鉴权</strong>，仅限本地自用，请勿部署到公网。</span>
+    <button type="button" class="warning-close" id="warningClose" aria-label="关闭提示">×</button>
+  </div>
+
+  <main class="admin-main">
+    <!-- ══════════ 学习笔记 ══════════ -->
+    <section class="admin-panel is-active" id="panel-notes" aria-labelledby="notes-panel-title">
+      <div class="admin-workspace">
+        <!-- 左栏：列表 -->
+        <div class="admin-list-pane">
+          <div class="pane-head">
+            <h2 class="pane-title" id="notes-panel-title">学习笔记 <span class="pane-count" id="notesCount">0</span></h2>
+            <div class="pane-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="notesNew">新建</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="notesRefresh">刷新</button>
+            </div>
+          </div>
+          
+          <div class="admin-list" id="notesList">
+            <div class="loading-state">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 右栏：编辑表单 -->
+        <div class="admin-form-pane">
+          <div class="form-head">
+            <h3 class="form-title" id="notesFormTitle">新建笔记</h3>
+          </div>
+          <form class="admin-form" id="notesForm" autocomplete="off">
+            <input type="hidden" id="noteId" value="">
+            <div class="form-group">
+              <label for="noteTitle">标题 *</label>
+              <input type="text" id="noteTitle" placeholder="请输入笔记标题" required>
+            </div>
+            <div class="form-group">
+              <label for="noteExcerpt">摘要</label>
+              <textarea id="noteExcerpt" rows="3" placeholder="列表卡片上显示的一句话简介"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="noteTag">标签</label>
+              <input type="text" id="noteTag" placeholder="如：前端基础">
+            </div>
+            <div class="form-group">
+              <label for="noteContent">正文（Markdown）</label>
+              <div class="md-editor">
+                <textarea id="noteContent" class="md-input" placeholder="支持 ## 标题、``` 代码块、`行内代码`、**粗体**、- 列表"></textarea>
+                <div class="md-preview" id="notePreview" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="notesSave">
+                <span class="btn-text">保存笔记</span>
+                <span class="btn-loading" style="display:none;">保存中...</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="notesCancel">清空</button>
+              <button type="button" class="btn btn-danger" id="notesDelete" style="display:none;">删除</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ 项目实践 ══════════ -->
+    <section class="admin-panel" id="panel-projects" aria-labelledby="projects-panel-title">
+      <div class="admin-workspace">
+        <div class="admin-list-pane">
+          <div class="pane-head">
+            <h2 class="pane-title" id="projects-panel-title">项目实践 <span class="pane-count" id="projectsCount">0</span></h2>
+            <div class="pane-actions">
+              <button type="button" class="btn btn-primary btn-sm" id="projectsNew">新建</button>
+              <button type="button" class="btn btn-secondary btn-sm" id="projectsRefresh">刷新</button>
+            </div>
+          </div>
+          
+          <div class="admin-list" id="projectsList">
+            <div class="loading-state">加载中...</div>
+          </div>
+        </div>
+
+        <div class="admin-form-pane">
+          <div class="form-head">
+            <h3 class="form-title" id="projectsFormTitle">新建项目</h3>
+          </div>
+          <form class="admin-form" id="projectsForm" autocomplete="off">
+            <input type="hidden" id="projectId" value="">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="projectTitle">项目名称 *</label>
+                <input type="text" id="projectTitle" placeholder="请输入项目名称" required>
+              </div>
+              </div>
+            <div class="form-group">
+              <label for="projectDescription">项目简介</label>
+              <textarea id="projectDescription" rows="2" placeholder="卡片上显示的一句话介绍"></textarea>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="projectTags">技术标签</label>
+                <input type="text" id="projectTags" placeholder="用英文逗号分隔，如：React,TypeScript">
+              </div>
+              <div class="form-group">
+                <label for="projectVisual">卡片预览样式</label>
+                <div class="glass-select" id="glassSelectVisual">
+                  <button type="button" class="glass-select-trigger" id="projectVisualTrigger" aria-haspopup="listbox" aria-expanded="false">
+                    <span class="glass-select-value" id="projectVisualValue"></span>
+                    <svg class="glass-select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"></path></svg>
+                  </button>
+                  <ul class="glass-select-menu" id="projectVisualMenu" role="listbox" hidden></ul>
+                </div>
+                <select id="projectVisual" class="glass-select-native" tabindex="-1" aria-hidden="true">
+                  <option value="auto">auto — 自动（按关键字个数选最佳动画，推荐）</option>
+                  <option value="carousel">carousel — 堆叠轮播（关键词居中叠放，依次浮现高亮）</option>
+                  <option value="dial">dial — 环形表盘（5 词环形 + 表针步进指向当前）</option>
+                  <option value="marquee">marquee — 三行弹幕（关键词分配到 3 行循环飘过）</option>
+                  <option value="wave">wave — 波浪切换（水平排列 + 依次上下浮动）</option>
+                </select>
+                <input type="text" id="projectVisualKeywords" placeholder="关键词用空格分隔，如：项目概述 核心功能 技术栈">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="projectPreviewUrl">在线预览链接</label>
+                <input type="url" id="projectPreviewUrl" placeholder="https://">
+              </div>
+              <div class="form-group">
+                <label for="projectSourceUrl">源码链接</label>
+                <input type="url" id="projectSourceUrl" placeholder="https://github.com/...">
+              </div>
+            </div>
+            <div class="form-group form-check">
+              <label class="check-label">
+                <input type="checkbox" id="projectFeatured">
+                <span>设为精选项目（大卡片展示）</span>
+              </label>
+            </div>
+            <div class="form-group">
+              <label for="projectContent">项目详情正文（Markdown）</label>
+              <div class="md-editor">
+                <textarea id="projectContent" class="md-input" placeholder="项目详情弹窗中展示的完整介绍"></textarea>
+                <div class="md-preview" id="projectPreview" aria-live="polite"></div>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="projectsSave">
+                <span class="btn-text">保存项目</span>
+                <span class="btn-loading" style="display:none;">保存中...</span>
+              </button>
+              <button type="button" class="btn btn-secondary" id="projectsCancel">清空</button>
+              <button type="button" class="btn btn-danger" id="projectsDelete" style="display:none;">删除</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════ 关于我 ══════════ -->
+    <section class="admin-panel" id="panel-about" aria-labelledby="about-panel-title">
+      <div class="admin-single">
+        <div class="form-head">
+          <h3 class="form-title" id="about-panel-title">关于我</h3>
+          <p class="form-desc">保存后立即写入数据库，头像文字、GitHub 链接与个人简介都会在前台直接生效。</p>
+        </div>
+        <form class="admin-form" id="aboutForm" autocomplete="off">
+          <div class="form-row">
+            <div class="form-group">
+              <label for="aboutName">名称</label>
+              <input type="text" id="aboutName" placeholder="学习随录">
+            </div>
+            <div class="form-group form-group-narrow">
+              <label for="aboutAvatar">头像文字</label>
+              <input type="text" id="aboutAvatar" maxlength="2" placeholder="学">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="aboutBio">个人简介</label>
+            <textarea id="aboutBio" rows="4" placeholder="介绍你自己..."></textarea>
+            <p class="field-hint">用<strong>空行</strong>分隔可分成两段，分别对应前台的两段介绍；只写一段时，前台第二段保持默认文案。</p>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="aboutEmail">邮箱</label>
+              <input type="email" id="aboutEmail" placeholder="hello@example.com">
+            </div>
+            <div class="form-group">
+              <label for="aboutGithub">GitHub 链接</label>
+              <input type="url" id="aboutGithub" placeholder="https://github.com/...">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="aboutSave">
+              <span class="btn-text">保存信息</span>
+              <span class="btn-loading" style="display:none;">保存中...</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="aboutRefresh">重新载入</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- 删除确认弹窗：复用前台 .modal-overlay / .modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+      <button type="button" class="modal-close" id="confirmClose" aria-label="关闭">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+      <div class="modal-header">
+        <h3 class="modal-title" id="confirm-title">确认删除</h3>
+        <p class="modal-subtitle" id="confirmText">此操作不可恢复。</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="confirmCancel">取消</button>
+        <button type="button" class="btn btn-danger" id="confirmOk">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast：复用前台 .toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
